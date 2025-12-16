@@ -1,0 +1,16 @@
+# Ambiente virtual
+venv/
+
+# Arquivos Python
+__pycache__/
+*.pyc
+
+# Banco de dados
+*.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Sistema
+.DS_Store
