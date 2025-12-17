@@ -22,6 +22,21 @@ def init_db():
     conn.commit()
     conn.close()
 
+def get_main_tasks():
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT *
+        FROM tasks
+        WHERE parent_task = 'main'
+        ORDER BY due_date ASC
+    """)
+
+    tasks = cursor.fetchall()
+    conn.close()
+    return tasks
+
 def insert_task(title, due_date, theme, parent_task="main"):
     conn = get_connection()
     cursor = conn.cursor()
@@ -42,11 +57,35 @@ def delete_task(task_id):
     cursor = conn.cursor()
 
     cursor.execute(
+        "SELECT * FROM tasks WHERE id = ?",
+        (task_id,)
+    )
+
+    task = cursor.fetchone()
+
+    if task is None:
+        conn.close()
+        raise ValueError("Tarefa não encontrada.")
+
+    if task['parent_task'] != 'main':
+        cursor.execute(
         """
         DELETE FROM tasks WHERE id = ?
         """,
         (task_id,)
     )
+    else:
+        main_title = task["title"]
+
+        cursor.execute(
+            "DELETE FROM tasks WHERE parent_task = ?",
+            (main_title,)
+        )
+
+        cursor.execute(
+            "DELETE FROM tasks WHERE id = ?",
+            (task_id,)
+        )
 
     conn.commit()
     conn.close()
@@ -66,3 +105,21 @@ def update_task(task_id, title, due_date, theme, parent_task):
 
     conn.commit()
     conn.close()
+
+def get_subtasks(parent_title):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT *
+        FROM tasks
+        WHERE parent_task = ?
+        ORDER BY due_date ASC
+        """,
+        (parent_title,)
+    )
+
+    subtasks = cursor.fetchall()
+    conn.close()
+    return subtasks
