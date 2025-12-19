@@ -39,8 +39,8 @@ class TodoApp(App):
         if node.children:
             return
 
-        parent_title = node.data
-        subtasks = get_subtasks(parent_title)
+        parent_id = node.data
+        subtasks = get_subtasks(parent_id)
 
         for sub in subtasks:
             node.add(
@@ -49,9 +49,7 @@ class TodoApp(App):
         )
 
     def action_reload(self):
-        tree = self.query_one(Tree)
-        tree.clear()
-        self.mount(self.build_tree(), replace=True)
+        self.reload_tree()
 
     def on_key(self, event):
         if event.key == "enter":
@@ -79,8 +77,8 @@ class TodoApp(App):
         tree.clear()
         for task in get_main_tasks():
             tree.root.add(
-                f"{task['title']} ({task['due_date']})",
-                data=task["title"],
+                f"TODO {task['title']} ({task['due_date']})",
+                data=task["id"],
                 expand=False
             )
 
@@ -105,12 +103,14 @@ class TodoApp(App):
         title = parts[0].strip()
         due_date = parts[1].strip()
         theme = parts[2].strip()
-        parent_task = "main"
+
+        parent_id = None
 
         if len(parts) == 4:
-            parent_task = parts[3].strip()
+            p = parts[3].strip()
+            parent_id = int(p) if p else None
 
-        insert_task(title, due_date, theme, parent_task)
+        insert_task(title, due_date, theme, parent_id)
 
         print("Tarefa adicionada.")
 
@@ -141,12 +141,11 @@ class TodoApp(App):
         title = fields[0].strip()
         due_date = fields[1].strip()
         theme = fields[2].strip()
-        parent_task = "main"
 
         if len(fields) == 4:
-            parent_task = fields[3].strip()
+            parent_id = fields[3].strip()
 
-        update_task(task_id, title, due_date, theme, parent_task)
+        update_task(task_id, title, due_date, theme, parent_id)
         print(f"Tarefa {task_id} atualizada.")
 
 
