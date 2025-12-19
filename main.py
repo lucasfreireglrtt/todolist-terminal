@@ -27,7 +27,7 @@ class TodoApp(App):
 
         for task in main_tasks:
             node = tree.root.add(
-                f"{task['title']} ({task['due_date']})",
+                f"TODO {task['title']} ({task['due_date']})",
                 expand=False,
                 data=task["id"],
             )
@@ -44,7 +44,7 @@ class TodoApp(App):
 
         for sub in subtasks:
             node.add(
-                f"{sub['title']} ({sub['due_date']})",
+                f"TODO {sub['title']} ({sub['due_date']})",
                 data=sub["id"]  
         )
 
@@ -57,11 +57,11 @@ class TodoApp(App):
         if event.key == "enter":
             node = self.query_one(Tree).cursor_node
             if node:
-                node.set_label(f"[green]{node.label}[/green]")
+                node.set_label(f"[green]DONE[/green] {node.label[5:]}")
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         command = event.value.strip()
-        event.input.value = ""  # limpa a linha
+        event.input.value = ""
 
         if command.startswith("add "):
             self.handle_add(command)
@@ -70,7 +70,7 @@ class TodoApp(App):
         elif command.startswith("edit "):
             self.handle_edit(command)
         else:
-            self.notify("Comando desconhecido", severity="warning")
+            self.notify("unknown command", severity="error")
 
         self.reload_tree()
     
