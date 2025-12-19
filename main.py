@@ -1,8 +1,9 @@
-from database import init_db, insert_task, delete_task, update_task, get_main_tasks, get_subtasks
+from database import init_db, insert_task, delete_task, update_task, get_main_tasks, get_subtasks, mark_task_done
 from textual.app import App, ComposeResult
 from textual.widgets import Tree, Input
 from textual.widgets.tree import TreeNode
 from textual.containers import Vertical
+from datetime import datetime, date
 
 init_db()
 
@@ -11,6 +12,30 @@ class TodoApp(App):
         ("q", "quit", "Sair"),
         ("r", "reload", "Recarregar"),
     ]
+
+    def process_task(self, task):
+        due = datetime.strptime(task["due_date"], "%Y-%m-%d").date()
+        today = date.today()
+        status = (task["status"] or "").lower()
+
+        if status == "done" and due < today:
+            delete_task(task["id"])
+            return None
+
+        title = task["title"]
+
+        status_label = "[green]DONE[/green]" if status == "DONE" else "TODO"
+
+        if status != "done" and due < today:
+            title = f"[red]LATE[/red] {title}"
+
+        elif (due - today).days == 1:
+            title = f"*{status_label} {title}"
+
+        else:
+            title = f"{status_label} {title}"
+
+        return title
 
     def compose(self) -> ComposeResult:
         with Vertical():
@@ -26,8 +51,12 @@ class TodoApp(App):
         main_tasks = get_main_tasks()
 
         for task in main_tasks:
+            label_title = self.process_task(task)
+            if label_title is None:
+                continue
+
             node = tree.root.add(
-                f"TODO {task['title']} ({task['due_date']})",
+                f"{label_title} ({task['due_date']})",
                 expand=False,
                 data=task["id"],
             )
@@ -43,8 +72,12 @@ class TodoApp(App):
         subtasks = get_subtasks(parent_id)
 
         for sub in subtasks:
+            label_title = self.process_task(sub)
+            if label_title is None:
+                continue
+
             node.add(
-                f"TODO {sub['title']} ({sub['due_date']})",
+                f"{label_title} ({sub['due_date']})",
                 data=sub["id"]  
         )
 
@@ -55,7 +88,9 @@ class TodoApp(App):
         if event.key == "enter":
             node = self.query_one(Tree).cursor_node
             if node:
-                node.set_label(f"[green]DONE[/green] {node.label[5:]}")
+                if node.data:
+                    mark_task_done(node.data)
+                self.reload_tree()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         command = event.value.strip()
@@ -76,9 +111,13 @@ class TodoApp(App):
         tree = self.query_one(Tree)
         tree.clear()
         for task in get_main_tasks():
+            label_title = self.process_task(task)
+            if label_title is None:
+                continue
+
             tree.root.add(
-                f"TODO {task['title']} ({task['due_date']})",
-                data=task["id"],
+                f"{label_title} ({task['due_date']})",
+                data=task['id'],
                 expand=False
             )
 
