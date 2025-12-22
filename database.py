@@ -31,11 +31,10 @@ def get_status(id):
         SELECT status
         FROM tasks
         WHERE id = ?
-    """, (id))
+    """, (id,))
 
-    tasks = cursor.fetchall()
-    conn.close()
     row = cursor.fetchone()
+    conn.close()
     return row["status"] if row else None
 
 def mark_task_done(task_id):
@@ -43,7 +42,19 @@ def mark_task_done(task_id):
     cursor = conn.cursor()
 
     cursor.execute(
-        "UPDATE tasks SET status = 'done' WHERE id = ?",
+        "UPDATE tasks SET status = 'DONE' WHERE id = ?",
+        (task_id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+def mark_task_todo(task_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "UPDATE tasks SET status = 'TODO' WHERE id = ?",
         (task_id,)
     )
 

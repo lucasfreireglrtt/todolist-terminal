@@ -1,4 +1,4 @@
-from database import init_db, insert_task, delete_task, update_task, get_main_tasks, get_subtasks, mark_task_done
+from database import init_db, insert_task, delete_task, update_task, get_main_tasks, get_subtasks, mark_task_done, get_status, mark_task_todo
 from textual.app import App, ComposeResult
 from textual.widgets import Tree, Input
 from textual.widgets.tree import TreeNode
@@ -16,9 +16,9 @@ class TodoApp(App):
     def process_task(self, task):
         due = datetime.strptime(task["due_date"], "%Y-%m-%d").date()
         today = date.today()
-        status = (task["status"] or "").lower()
+        status = (task["status"] or "")
 
-        if status == "done" and due < today:
+        if status == "DONE" and due < today:
             delete_task(task["id"])
             return None
 
@@ -26,10 +26,10 @@ class TodoApp(App):
 
         status_label = "[green]DONE[/green]" if status == "DONE" else "TODO"
 
-        if status != "done" and due < today:
+        if status != "DONE" and due < today:
             title = f"[red]LATE[/red] {title}"
 
-        elif (due - today).days == 1:
+        elif status != "DONE" and (due - today).days <= 1:
             title = f"*{status_label} {title}"
 
         else:
@@ -87,9 +87,11 @@ class TodoApp(App):
     def on_key(self, event):
         if event.key == "enter":
             node = self.query_one(Tree).cursor_node
-            if node:
-                if node.data:
+            if node and node.data:
+                if get_status(node.data) != "DONE":
                     mark_task_done(node.data)
+                else:
+                    mark_task_todo(node.data)
                 self.reload_tree()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
