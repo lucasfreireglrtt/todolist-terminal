@@ -30,7 +30,7 @@ class TodoApp(App):
             title = f"[red]LATE[/red] {title}"
 
         elif status != "DONE" and (due - today).days <= 1:
-            title = f"*{status_label} {title}"
+            title = f"{status_label}* {title}"
 
         else:
             title = f"{status_label} {title}"
@@ -56,7 +56,7 @@ class TodoApp(App):
                 continue
 
             node = tree.root.add(
-                f"{label_title} ({task['due_date']})",
+                f"{label_title} ({task['due_date'][8:10]}/{task['due_date'][5:7]})",
                 expand=False,
                 data=task["id"],
             )
@@ -77,7 +77,7 @@ class TodoApp(App):
                 continue
 
             node.add(
-                f"{label_title} ({sub['due_date']})",
+                f"{label_title} ({sub['due_date'][8:10]}/{sub['due_date'][5:7]})",
                 data=sub["id"]  
         )
 
@@ -118,7 +118,7 @@ class TodoApp(App):
                 continue
 
             tree.root.add(
-                f"{label_title} ({task['due_date']})",
+                f"{label_title} ({task['due_date'][8:10]}/{task['due_date'][5:7]})",
                 data=task['id'],
                 expand=False
             )
